@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- Inline favicon to avoid ORB/network blocking issues -->
+    <link rel="icon" type="image/svg+xml" href='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 257"><defs><linearGradient id="g1" x1="-.828%" x2="57.636%" y1="7.652%" y2="78.411%"><stop offset="0%" stop-color="%2341D1FF"/><stop offset="100%" stop-color="%23BD34FE"/></linearGradient><linearGradient id="g2" x1="43.376%" x2="50.316%" y1="2.242%" y2="89.03%"><stop offset="0%" stop-color="%23FFEA83"/><stop offset="8.333%" stop-color="%23FFDD35"/><stop offset="100%" stop-color="%23FFA800"/></linearGradient></defs><path fill="url(%23g1)" d="M255.153 37.938L134.897 252.976c-2.483 4.44-8.862 4.466-11.382.048L.875 37.958c-2.746-4.814 1.371-10.646 6.827-9.67l120.385 21.517a6.537 6.537 0 0 0 2.322-.004l117.867-21.483c5.438-.991 9.574 4.796 6.877 9.62Z"/><path fill="url(%23g2)" d="M185.432.063L96.44 17.501a3.268 3.268 0 0 0-2.634 3.014l-5.474 92.456a3.268 3.268 0 0 0 3.997 3.378l24.777-5.718c2.318-.535 4.413 1.507 3.936 3.838l-7.361 36.047c-.495 2.426 1.782 4.5 4.151 3.78l15.304-4.649c2.372-.72 4.652 1.36 4.15 3.788l-11.698 56.621c-.732 3.542 3.979 5.473 5.943 2.437l1.313-2.028l72.516-144.72c1.215-2.423-.88-5.186-3.54-4.672l-25.505 4.922c-2.396.462-4.435-1.77-3.759-4.114l16.646-57.705c.677-2.35-1.37-4.583-3.769-4.113Z"/></svg>' />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Security Headers (meta-based for static SPA; prefer real HTTP headers in production) -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests" />
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+    <meta http-equiv="Permissions-Policy" content="geolocation=(), camera=(), microphone=(), payment=(), clipboard-read=(), clipboard-write=(self)" />
+  <title>Subscription Dashboard</title>
+  <!-- Dynamic theme color for mobile address bar -->
+  <meta name="theme-color" content="#DFF2EB" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0e1726" media="(prefers-color-scheme: dark)">
+  <!-- Single theme-color tag that we will update dynamically (fallback) -->
+  <meta name="theme-color" id="meta-theme-color" content="#DFF2EB" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --font-sans: 'Vazirmatn','Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI','Roboto','Helvetica Neue','Arial',sans-serif;
+        color-scheme: light dark;
+        /* base semantic tokens (light defaults) kept minimal here; full palette in css */
+      }
+      body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+      [dir="fa"] body, [dir="rtl"] body { font-family: 'Vazirmatn','Inter',sans-serif; }
+      /* Prevent flash of wrong theme by using visibility swap */
+      html[data-theme-preload] body { visibility: hidden; }
+    </style>
+    <script>
+      (function() {
+        try {
+          var stored = localStorage.getItem('theme');
+          var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var theme = stored === 'light' || stored === 'dark' ? stored : (systemDark ? 'dark' : 'light');
+          if (theme === 'dark') document.documentElement.classList.add('dark');
+          // mark preload to avoid FOUC until React mounts and we remove it
+          document.documentElement.setAttribute('data-theme-preload','');
+          // set initial theme-color quickly
+          var meta = document.getElementById('meta-theme-color');
+          if (meta) meta.setAttribute('content', theme === 'dark' ? '#0e1726' : '#DFF2EB');
+        } catch (e) { /* ignore */ }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // After hydration remove preload attribute to reveal body (ensures minimal flash)
+      window.addEventListener('load', function() {
+        document.documentElement.removeAttribute('data-theme-preload');
+        document.body.style.visibility = 'visible';
+      });
+    </script>
+  </body>
+</html>
