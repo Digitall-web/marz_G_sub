@@ -45,9 +45,10 @@ function readQueryParam(name: string): string | null {
 }
 
 function extractToken(): string | null {
+  // Prefer bootstrap-captured global first
+  if (typeof window !== 'undefined' && (window as any).__SUB_TOKEN__) return (window as any).__SUB_TOKEN__;
   const fromQuery = readQueryParam('sub');
   if (fromQuery) return fromQuery;
-  // Try path pattern /sub/<token>
   if (typeof window !== 'undefined') {
     const parts = window.location.pathname.split('/').filter(Boolean);
     const idx = parts.findIndex(p => p.toLowerCase() === 'sub');
@@ -57,6 +58,8 @@ function extractToken(): string | null {
 }
 
 function extractApi(): string | null {
+  // Bootstrap script stored resolved API in __API_BASE__ (already prioritized rules applied)
+  if (typeof window !== 'undefined' && (window as any).__API_BASE__) return (window as any).__API_BASE__;
   const api = readQueryParam('api');
   if (api) return api;
   return null;
@@ -86,13 +89,13 @@ export function useAccount(): UseAccountResult {
       // Build base URL
       let baseUrl: string | null = null;
       if (apiUrl) {
-        baseUrl = apiUrl.endsWith('/info') ? apiUrl.slice(0, -5) : apiUrl; // remove trailing /info if present
+        baseUrl = apiUrl.endsWith('/info') ? apiUrl.slice(0, -5) : apiUrl; // explicit override or constructed path already
       } else {
         if (!token) throw new Error('Missing token (sub)');
-  const base = (import.meta as any).env?.VITE_API_BASE || 'https://api.samanii.com';
-  if (!base) console.warn('[useAccount] VITE_API_BASE not set; falling back to default https://api.samanii.com');
-        const baseClean = base.replace(/\/$/, '');
-        baseUrl = base ? `${baseClean}/sub/${token}` : `/sub/${token}`;
+        // Use dynamic API base resolved during bootstrap or fallback to current origin
+        let root: string = (typeof window !== 'undefined' && (window as any).__API_BASE__) || (typeof window !== 'undefined' ? window.location.origin : '');
+        root = root.replace(/\/$/, '');
+        baseUrl = `${root}/sub/${token}`;
       }
       const infoUrl = baseUrl + '/info';
       let finalData: any = null;
@@ -147,8 +150,8 @@ export function useAccount(): UseAccountResult {
 
   // Expose debug helpers for manual testing in console
   useEffect(() => {
-    (window as any).setSub = (t: string) => { setToken(t); };
-    (window as any).setApi = (u: string) => { setApiUrl(u); };
+    (window as any).setSub = (t: string) => { if (t) { (window as any).__SUB_TOKEN__ = t; setToken(t); } };
+    (window as any).setApi = (u: string) => { if (u) { (window as any).__API_BASE__ = u.replace(/\/+$/, ''); setApiUrl((window as any).__API_BASE__); } };
     (window as any).reloadAccount = () => fetchData(true);
   }, [fetchData]);
 
